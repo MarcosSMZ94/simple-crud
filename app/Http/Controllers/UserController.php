@@ -5,9 +5,29 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
+    public function login(Request $request) {
+        $fields = $request->validate([
+            'loginname' => ['required', 'string', 'max:255'],
+            'loginpassword' => ['required', 'string', 'min:8', 'max:255'],
+        ]);
+
+        if (Auth::attempt(['name' => $fields['loginname'], 'password' => $fields['loginpassword']])) {
+            $request->session()->regenerate();
+        }
+
+        return redirect('/');
+    }
+
+    public function logout() {
+        Auth::logout();
+
+        return redirect('/');
+    }
+
     public function register(Request $request) {
         $fields = $request->validate([
             'name' => ['required', 'string', 'min:3', 'max:255', Rule::unique('users', 'name')],
@@ -21,7 +41,7 @@ class UserController extends Controller
             'password' => bcrypt($fields['password']),
         ]);
 
-        auth()->guard()->login($user);
+        Auth::login($user);
 
         return redirect('/');
     }
